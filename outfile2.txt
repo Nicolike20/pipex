@@ -1,0 +1,9 @@
+a.out
+infile.txt
+infile2.txt
+leaks
+libft
+outfile.txt
+outfile2.txt
+pipex.c
+pipex.h
