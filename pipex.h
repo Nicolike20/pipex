@@ -6,7 +6,7 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/04 12:39:08 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/09 13:24:03 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/11/09 19:20:15 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,9 @@ typedef struct s_pipex
 	char	*path;
 	char	*line;
 	int		check;
+	int		quote_cnt;
+	int		quote_check;
+	int		quote_tmp;
 }t_pipex;
 
 #endif

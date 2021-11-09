@@ -6,7 +6,7 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/04 12:38:32 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/09 14:00:47 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/11/09 20:10:05 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,10 +21,24 @@ int	argv_check(char *argv)
 	i = -1;
 	while (argv[++i])
 	{
-		if (argv[i] == '\'' || argv[i] == '"') //comprobar que se cierran?
+		if (argv[i] == '\'' || argv[i] == '\"')
 			return (1);
 	}
 	return (0);
+}
+
+void	fail(t_pipex *vars, int code)
+{
+	vars = NULL;
+	if (code == 0)
+		write(2, "Error\n", 6);
+	if (code == 1)
+		write(2, "Command not found\n", 18);
+	if (code == 2)
+		write(2, "Pipe or fork error\n", 19);
+	/*if (code == 3)
+		write(2, "Close the quotation marks\n", 26);*/
+	exit(2);
 }
 
 void	get_path(t_pipex *vars)
@@ -45,8 +59,23 @@ void	get_path(t_pipex *vars)
 		tmp[i] = ft_strjoin(tmp[i], "/");
 		tmp[i] = ft_strjoin(tmp[i], vars->cmd[0]);
 	}
+	if (access(tmp[i - 1], X_OK) < 0)
+		fail(vars, 1);
 	vars->path = ft_strdup(tmp[i - 1]);
 }
+
+/*int	check_again(t_pipex *vars, char *argv)
+{
+	vars->quote_tmp = vars->quote_cnt;
+	while (argv[++vars->quote_tmp])
+	{
+		if (argv[vars->quote_tmp] == '\'' && vars->quote_check == 0)
+			return (0);
+		if (argv[vars->quote_tmp] == '\"' && vars->quote_check == 1)
+			return (0);
+	}
+	return (1);
+}*/
 
 void	parse_path(t_pipex *vars, char *argv)
 {
@@ -55,7 +84,7 @@ void	parse_path(t_pipex *vars, char *argv)
 	{
 		vars->cmd = ft_split(argv, ' ');
 		if (argv[0] == '.' || argv[0] == '~' || argv[0] == '/'
-				|| access(vars->cmd[0], X_OK) == 0)
+			|| access(vars->cmd[0], X_OK) == 0)
 		{
 			vars->path = ft_strdup(vars->cmd[0]);
 			vars->cmd[0] = ft_strrchr(vars->cmd[0], '/');
@@ -66,17 +95,42 @@ void	parse_path(t_pipex *vars, char *argv)
 			get_path(vars);
 		}
 	}
-	//else para comillas;
+	else
+	{
+		vars->quote_cnt = -1;
+		while ((argv[++vars->quote_cnt] != '\'' || argv[vars->quote_cnt] != '"') && argv[vars->quote_cnt])
+		{
+			if (argv[vars->quote_cnt] == '\'')
+			{
+				vars->quote_check = 0;
+				break ;
+			}
+			if (argv[vars->quote_cnt] == '"')
+			{
+				vars->quote_check = 1;
+				break ;
+			}
+		}
+		/*if (check_again(vars, argv))
+			fail(vars, 3);*/
+		vars->cmd = malloc(sizeof(char *) * 2 + 1);
+		if (vars->cmd == NULL)
+			fail(vars, 0);//mega_free?
+		vars->cmd[0] = ft_substr(argv, 0, vars->quote_cnt - 1);
+		vars->cmd[1] = ft_substr(argv, vars->quote_cnt + 1, ft_strlen(argv) - vars->quote_cnt - 2);
+		vars->cmd[2] = NULL;
+		get_path(vars);
+	} //mega_free?
 }
 
 void	father_son(t_pipex *vars, char *argv)
 {
 	//TODO: cerrar ends de las pipes;
 	if (pipe(vars->fd_rw) == -1)
-		return ; //maybe poner error?;
+		fail(vars, 2);
 	vars->pid = fork(); //0 hijo, > 0 padre, -1 error;
 	if (vars->pid < 0)
-		return ; //error msg;
+		fail(vars, 2);
 	if (vars->pid > 0) //padre
 	{
 		close(vars->fd_rw[1]);
@@ -102,13 +156,15 @@ void	here_doc(t_pipex *vars, char *delim)
 
 	del = ft_strjoin(delim, "\n");
 	if (pipe(vars->fd_rw) < 0)
-		return ; //error msg;
+		fail(vars, 2);
 	vars->pid = fork();
 	if (vars->pid < 0)
-		return ; //error msg;
+		fail(vars, 2);
 	if (vars->pid > 0)
 	{
-		//cerrar pipes?;
+		close(vars->fd_rw[1]);
+		dup2(vars->fd_rw[0], STDIN_FILENO);
+		close(vars->fd_rw[0]);
 		waitpid(vars->pid, NULL, 0);
 	}
 	else
@@ -159,11 +215,9 @@ int	main(int argc, char **argv)
 		close(vars.in_fd);
 		vars.out_fd = open(vars.outfile, O_WRONLY | O_TRUNC | O_CREAT, 0644);
 		if (vars.out_fd <= 0)
-			return (0); //error msg;
+			fail(&vars, 0);
 		while (++i < argc - 2)
-		{
 			father_son(&vars, argv[i]);
-		}
 		parse_path(&vars, argv[i]);
 		dup2(vars.out_fd, STDOUT_FILENO);
 		close(vars.out_fd);
@@ -171,14 +225,15 @@ int	main(int argc, char **argv)
 	}
 	else if (argc >= 5 && ft_strncmp(argv[1], "here_doc", 9) == 0)
 	{
-		here_doc(&vars, argv[2]);
-		vars.out_fd = open(vars.outfile, O_APPEND | O_WRONLY | O_CREAT, 0644);
+		vars.env = environ;
+		//vars.outfile = ft_strdup(argv[argc - 1]);
+		vars.out_fd = open(argv[argc - 1], O_WRONLY | O_APPEND | O_CREAT, 0644);
 		if (vars.out_fd <= 0)
-			return (0); //error msg;
+			fail(&vars, 0);
+		here_doc(&vars, argv[2]);
+		i++;
 		while (++i < argc - 2)
-		{
 			father_son(&vars, argv[i]);
-		}
 		parse_path(&vars, argv[i]);
 		dup2(vars.out_fd, STDOUT_FILENO);
 		close(vars.out_fd);
