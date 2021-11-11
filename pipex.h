@@ -6,7 +6,7 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/04 12:39:08 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/09 19:20:15 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/11/11 16:23:55 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,5 +36,11 @@ typedef struct s_pipex
 	int		quote_check;
 	int		quote_tmp;
 }t_pipex;
+
+void	fail(t_pipex *vars, int code);
+void	father_son(t_pipex *vars, char *argv);
+int		argv_check(char *argv);
+void	parse_path(t_pipex *vars, char *argv);
+void	here_doc_pipex(t_pipex *vars, int argc, char **argv, int i);
 
 #endif
