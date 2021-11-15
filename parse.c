@@ -6,7 +6,7 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/11 16:20:37 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/11 17:45:54 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/11/15 15:52:39 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,8 +18,10 @@ static void	get_path(t_pipex *vars)
 	char	**tmp;
 
 	i = 0;
-	while (ft_strncmp(vars->env[i], "PATH=", 5))
+	while (vars->env[i] && ft_strncmp(vars->env[i], "PATH=", 5))
 		i++;
+	if (vars->env[i] == NULL)
+		fail(vars, 0);
 	tmp = ft_split(vars->env[i], ':');
 	tmp[0] = ft_substr(tmp[0], 5, ft_strlen(tmp[0]));
 	i = 0;
