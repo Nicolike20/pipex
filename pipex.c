@@ -6,7 +6,7 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/04 12:38:32 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/11 17:51:07 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/11/16 13:17:36 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,11 +85,10 @@ static void	normal_pipex(t_pipex *vars, int argc, char **argv, int i)
 	execve(vars->path, vars->cmd, vars->env);
 }
 
-/*void	leak(void)
-  {
-  system("leaks -q pipex > leaks");
-  }*/
-/*	atexit(leak);*/
+void	leak(void)
+{
+	system("leaks -q pipex > leaks");
+}
 
 int	main(int argc, char **argv)
 {
@@ -97,6 +96,7 @@ int	main(int argc, char **argv)
 	t_pipex		vars;
 	int			i;
 
+	atexit(leak);
 	i = 1;
 	if (argc >= 5 && ft_strncmp(argv[1], "here_doc", 9) != 0)
 	{

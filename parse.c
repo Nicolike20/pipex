@@ -6,35 +6,51 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/11 16:20:37 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/15 15:52:39 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/11/16 12:42:03 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
+static void	aux_get_path(t_pipex *vars, int i, char *aux)
+{
+	aux = ft_strdup(vars->tmp[0]);
+	free(vars->tmp[0]);
+	vars->tmp[0] = ft_substr(vars->tmp[0], 5, ft_strlen(vars->tmp[0]));
+	free(aux);
+	i = 0;
+	aux = ft_strdup(vars->tmp[i]);
+	free(vars->tmp[i]);
+	vars->tmp[i] = ft_path_strjoin(aux, vars->cmd[0]);
+	free(aux);
+	while (access(vars->tmp[i++], X_OK) < 0 && vars->tmp[i])
+	{
+		free(vars->tmp[i - 1]);
+		aux = ft_strdup(vars->tmp[i]);
+		free(vars->tmp[i]);
+		vars->tmp[i] = ft_path_strjoin(aux, vars->cmd[0]);
+		free(aux);
+	}
+	if (access(vars->tmp[i - 1], X_OK) < 0)
+		fail(vars, 1);
+	aux = ft_strdup(vars->tmp[i - 1]);
+	free(vars->tmp[i - 1]);
+	vars->path = ft_strdup(aux);
+	free(aux);
+}
 static void	get_path(t_pipex *vars)
 {
 	int		i;
-	char	**tmp;
+	char	*aux;
 
 	i = 0;
+	aux = NULL;
 	while (vars->env[i] && ft_strncmp(vars->env[i], "PATH=", 5))
 		i++;
 	if (vars->env[i] == NULL)
 		fail(vars, 0);
-	tmp = ft_split(vars->env[i], ':');
-	tmp[0] = ft_substr(tmp[0], 5, ft_strlen(tmp[0]));
-	i = 0;
-	tmp[i] = ft_strjoin(tmp[i], "/");
-	tmp[i] = ft_strjoin(tmp[i], vars->cmd[0]);
-	while (access(tmp[i++], X_OK) < 0 && tmp[i])
-	{
-		tmp[i] = ft_strjoin(tmp[i], "/");
-		tmp[i] = ft_strjoin(tmp[i], vars->cmd[0]);
-	}
-	if (access(tmp[i - 1], X_OK) < 0)
-		fail(vars, 1);
-	vars->path = ft_strdup(tmp[i - 1]);
+	vars->tmp = ft_split(vars->env[i], ':');
+	aux_get_path(vars, i, aux);
 }
 
 static void	parse_path_if(t_pipex *vars, char *argv)

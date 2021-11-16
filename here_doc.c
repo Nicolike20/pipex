@@ -6,7 +6,7 @@
 /*   By: nortolan <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/11 16:12:35 by nortolan          #+#    #+#             */
-/*   Updated: 2021/11/11 16:18:17 by nortolan         ###   ########.fr       */
+/*   Updated: 2021/11/16 13:14:30 by nortolan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,7 @@ static void	here_doc(t_pipex *vars, char *delim)
 		here_doc_father(vars);
 	else
 		here_doc_son(vars, del);
+	free(del);
 }
 
 void	here_doc_pipex(t_pipex *vars, int argc, char **argv, int i)
